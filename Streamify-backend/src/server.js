@@ -31,6 +31,8 @@ app.use(
   })
 );
 
+app.options("*", cors()); // Enable preflight for all routes
+
 
 app.use(express.json());
 app.set("trust proxy", 1); // trust first proxy
