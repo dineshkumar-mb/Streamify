@@ -25,6 +25,7 @@ app.use(
       "http://localhost:5174",
       "https://streamify-frontend-iota.vercel.app",
       "https://streamify-ncde.onrender.com",
+      "https://streamify-inky-one.vercel.app",
     ],
     credentials: true, // allow frontend to send cookies
   })
