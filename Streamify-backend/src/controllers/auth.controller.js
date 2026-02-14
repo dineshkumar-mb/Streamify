@@ -204,15 +204,16 @@ export const forgotPassword = async (req, res) => {
 
       res.status(200).json({ success: true, data: "Email sent" });
     } catch (error) {
+      console.error("Error sending email in forgotPassword:", error);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
 
       await user.save({ validateBeforeSave: false });
 
-      return res.status(500).json({ message: "Email could not be sent" });
+      return res.status(500).json({ message: "Email could not be sent. Please try again later." });
     }
   } catch (error) {
-    console.error("Error in forgotPassword:", error);
+    console.error("Critical Error in forgotPassword:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
