@@ -176,7 +176,18 @@ export const forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Create reset url to frontend
-    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+    // Dynamic CLIENT_URL selection based on origin
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://streamify-frontend-iota.vercel.app",
+      "https://streamify-ncde.onrender.com",
+      "https://streamify-inky-one.vercel.app",
+    ];
+
+    const clientUrl = allowedOrigins.includes(origin) ? origin : (process.env.CLIENT_URL || "http://localhost:5173");
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
     const message = `
       <h1>You have requested a password reset</h1>
