@@ -6,7 +6,10 @@ const useSignUp = () => {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: signup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+    onSuccess: (data) => {
+      if (data?.token) localStorage.setItem("token", data.token);
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
   });
 
   return { isPending, error, signupMutation: mutate };
