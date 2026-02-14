@@ -1,6 +1,8 @@
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendEmail } from "../lib/email.js";
 
 export async function signup(req, res) {
   const { email, password, fullName } = req.body;
@@ -26,7 +28,7 @@ export async function signup(req, res) {
     }
 
     const idx = Math.floor(Math.random() * 100) + 1; // generate a num between 1-100
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${idx}`;
 
     const newUser = await User.create({
       email,
@@ -155,4 +157,78 @@ export async function onboard(req, res) {
   }
 }
 
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
 
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    // Hash token (private) and save to database
+    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset url to frontend
+    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
+    const message = `
+      <h1>You have requested a password reset</h1>
+      <p>Please go to this link to reset your password:</p>
+      <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
+    `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Password Reset Request",
+        message,
+      });
+
+      res.status(200).json({ success: true, data: "Email sent" });
+    } catch (error) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({ message: "Email could not be sent" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const resetPasswordToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid Token" });
+    }
+
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Password Reset Success",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};

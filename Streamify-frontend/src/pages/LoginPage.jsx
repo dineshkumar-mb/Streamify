@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShipWheelIcon } from "lucide-react";
+import { ShipWheelIcon, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router";
 import useLogin from "../hooks/useLogin";
 
@@ -8,6 +8,7 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   // This is how we did it at first, without using our custom hook
   // const queryClient = useQueryClient();
@@ -80,14 +81,32 @@ const LoginPage = () => {
                     <label className="label">
                       <span className="label-text">Password</span>
                     </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="input input-bordered w-full"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="input input-bordered w-full pr-10"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content transition-colors"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-5" />
+                        ) : (
+                          <Eye className="size-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      Forgot Password?
+                    </Link>
                   </div>
 
                   <button type="submit" className="btn btn-primary w-full" disabled={isPending}>

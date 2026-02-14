@@ -8,6 +8,8 @@ import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
 import FriendsPage from "./pages/FriendsPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 
 import { Toaster } from "react-hot-toast";
 
@@ -51,6 +53,14 @@ const App = () => {
           element={
             !isAuthenticated ? <LoginPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />
           }
+        />
+        <Route
+          path="/forgot-password"
+          element={!isAuthenticated ? <ForgotPasswordPage /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/reset-password/:token"
+          element={!isAuthenticated ? <ResetPasswordPage /> : <Navigate to="/" />}
         />
         <Route
           path="/notifications"
