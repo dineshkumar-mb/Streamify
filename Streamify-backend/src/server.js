@@ -18,20 +18,28 @@ if (!process.env.MONGO_URI) console.error("FATAL ERROR: MONGO_URI is not defined
 
 const __dirname = path.resolve();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://streamify-frontend-iota.vercel.app",
+  "https://streamify-ncde.onrender.com",
+  "https://streamify-inky-one.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://streamify-frontend-iota.vercel.app",
-      "https://streamify-ncde.onrender.com",
-      "https://streamify-inky-one.vercel.app",
-    ],
-    credentials: true, // allow frontend to send cookies
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
-
-app.options("*", cors()); // Enable preflight for all routes
 
 
 import passport from "./lib/passport.js";
