@@ -30,7 +30,6 @@ passport.use(
                     user = await User.create({
                         email,
                         fullName,
-                        password: "", // No password for OAuth users
                         profilePic: profilePic || randomAvatar,
                     });
 

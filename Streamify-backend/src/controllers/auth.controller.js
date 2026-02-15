@@ -264,14 +264,18 @@ export const googleAuthCallback = (req, res) => {
       secure: process.env.NODE_ENV !== "development",
     });
 
-    // Dynamic CLIENT_URL selection based on origin (though hard to know in callback, usually rely on ENV)
-    // For simplicity in callback, we typically use the configured CLIENT_URLEnv or a default
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    // Dynamic CLIENT_URL selection based on NODE_ENV
+    const clientUrl = process.env.NODE_ENV === "development"
+      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
+      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
 
     res.redirect(`${clientUrl}`);
 
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/login?error=GoogleAuthFailed`);
+    const clientUrl = process.env.NODE_ENV === "development"
+      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
+      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+    res.redirect(`${clientUrl}/login?error=GoogleAuthFailed`);
   }
 };
