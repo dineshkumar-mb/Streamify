@@ -6,6 +6,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.error("FATAL ERROR: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is not defined!");
+}
+
 passport.use(
     new GoogleStrategy(
         {
