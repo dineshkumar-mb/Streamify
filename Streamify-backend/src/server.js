@@ -34,9 +34,12 @@ app.use(
 app.options("*", cors()); // Enable preflight for all routes
 
 
+import passport from "./lib/passport.js";
+
 app.use(express.json());
 app.set("trust proxy", 1); // trust first proxy
 app.use(cookieParser());
+app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

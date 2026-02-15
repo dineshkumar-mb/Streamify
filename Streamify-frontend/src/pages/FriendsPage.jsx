@@ -12,7 +12,7 @@ const FriendsPage = () => {
     if (isLoading) return <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg" /></div>;
 
     return (
-        <div className="h-screen bg-base-100">
+        <div className="h-full bg-base-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h1 className="text-3xl font-bold mb-8">My Friends</h1>
 

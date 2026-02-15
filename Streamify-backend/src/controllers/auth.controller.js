@@ -245,3 +245,33 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
+export const googleAuthCallback = (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("jwt", token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
+      secure: process.env.NODE_ENV !== "development",
+    });
+
+    // Dynamic CLIENT_URL selection based on origin (though hard to know in callback, usually rely on ENV)
+    // For simplicity in callback, we typically use the configured CLIENT_URLEnv or a default
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+    res.redirect(`${clientUrl}`);
+
+  } catch (error) {
+    console.error("Error in googleCallback:", error);
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/login?error=GoogleAuthFailed`);
+  }
+};

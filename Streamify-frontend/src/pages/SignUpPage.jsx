@@ -3,6 +3,7 @@ import { ShipWheelIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import useSignUp from "../hooks/useSignUp";
+import { BASE_URL } from "../lib/axios";
 
 const SignUpPage = () => {
   const [signupData, setSignupData] = useState({
@@ -141,6 +142,10 @@ const SignUpPage = () => {
                     </Link>
                   </p>
                 </div>
+                <button type="button" className="btn btn-outline w-full mt-4" onClick={() => window.location.href = `${BASE_URL}/auth/google`}>
+                  <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" className="w-5 h-5 mr-2" />
+                  Continue with Google
+                </button>
               </div>
             </form>
           </div>
@@ -162,8 +167,8 @@ const SignUpPage = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

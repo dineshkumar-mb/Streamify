@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ShipWheelIcon, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router";
 import useLogin from "../hooks/useLogin";
+import { BASE_URL } from "../lib/axios";
 
 const LoginPage = () => {
   const [loginData, setLoginData] = useState({
@@ -129,6 +130,10 @@ const LoginPage = () => {
                     </p>
                   </div>
                 </div>
+                <button type="button" className="btn btn-outline w-full" onClick={() => window.location.href = `${BASE_URL}/auth/google`}>
+                  <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" className="w-5 h-5 mr-2" />
+                  Continue with Google
+                </button>
               </div>
             </form>
           </div>
@@ -150,8 +155,8 @@ const LoginPage = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 export default LoginPage;
