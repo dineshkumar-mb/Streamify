@@ -22,9 +22,11 @@ passport.use(
         {
             clientID: GOOGLE_CLIENT_ID || "MISSING_CLIENT_ID",
             clientSecret: GOOGLE_CLIENT_SECRET || "MISSING_CLIENT_SECRET",
-            callbackURL: process.env.NODE_ENV === "development"
-                ? "http://localhost:5001/api/auth/google/callback"
-                : "https://streamify-ncde.onrender.com/api/auth/google/callback",
+            callbackURL: process.env.BACKEND_URL
+                ? `${process.env.BACKEND_URL.replace(/\/$/, '')}/api/auth/google/callback`
+                : (process.env.NODE_ENV === "development"
+                    ? "http://localhost:5001/api/auth/google/callback"
+                    : "https://streamify-ncde.onrender.com/api/auth/google/callback"),
         },
         async (accessToken, refreshToken, profile, done) => {
             try {

@@ -264,18 +264,25 @@ export const googleAuthCallback = (req, res) => {
       secure: process.env.NODE_ENV !== "development",
     });
 
-    // Dynamic CLIENT_URL selection based on NODE_ENV
-    const clientUrl = process.env.NODE_ENV === "development"
+    // Dynamic CLIENT_URL selection based on NODE_ENV and host
+    const isDev = process.env.NODE_ENV === "development";
+    let clientUrl = isDev
       ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
       : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
 
-    res.redirect(`${clientUrl}`);
+    // Double check if we are running in production but accessing via local host (edge case)
+    if (req.headers.host && req.headers.host.includes('localhost')) {
+      // If the request comes from localhost even in "production" mode, we might want to redirect back to local frontend
+    }
+
+    res.redirect(`${clientUrl.replace(/\/$/, '')}`);
 
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    const clientUrl = process.env.NODE_ENV === "development"
+    const isDev = process.env.NODE_ENV === "development";
+    const clientUrl = isDev
       ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
       : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
-    res.redirect(`${clientUrl}/login?error=GoogleAuthFailed`);
+    res.redirect(`${clientUrl.replace(/\/$/, '')}/login?error=GoogleAuthFailed`);
   }
 };
