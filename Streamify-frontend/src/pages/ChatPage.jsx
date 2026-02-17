@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
 import { getStreamToken } from "../lib/api";
+import { Lock } from "lucide-react";
 
 import {
   Channel,
-  ChannelHeader,
   Chat,
   MessageInput,
   MessageList,
@@ -18,11 +18,16 @@ import toast from "react-hot-toast";
 
 import ChatLoader from "../components/ChatLoader";
 import CallButton from "../components/CallButton";
+import CustomMessage from "../components/CustomMessage";
+import WhatsAppHeader from "../components/WhatsAppHeader";
+import VoiceRecorder from "../components/VoiceRecorder";
+import { encryptMessage } from "../lib/encryption";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
 const ChatPage = () => {
   const { id: targetUserId } = useParams();
+  const navigate = useNavigate();
 
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
@@ -33,7 +38,7 @@ const ChatPage = () => {
   const { data: tokenData } = useQuery({
     queryKey: ["streamToken"],
     queryFn: getStreamToken,
-    enabled: !!authUser, // this will run only when authUser is available
+    enabled: !!authUser,
   });
 
   useEffect(() => {
@@ -54,12 +59,7 @@ const ChatPage = () => {
           tokenData.token
         );
 
-        //
         const channelId = [authUser._id, targetUserId].sort().join("-");
-
-        // you and me
-        // if i start the chat => channelId: [myId, yourId]
-        // if you start the chat => channelId: [yourId, myId]  => [myId,yourId]
 
         const currChannel = client.channel("messaging", channelId, {
           members: [authUser._id, targetUserId],
@@ -78,35 +78,126 @@ const ChatPage = () => {
     };
 
     initChat();
-  }, [tokenData, authUser, targetUserId]);
+  }, [tokenData, authUser, targetUserId, STREAM_API_KEY]);
 
-  const handleVideoCall = () => {
+  const handleAudioCall = async () => {
     if (channel) {
-      const callUrl = `${window.location.origin}/call/${channel.id}`;
+      const callUrl = `${window.location.origin}/call/${channel.id}?type=audio`;
+      const callText = `Incoming audio call... Join here: ${callUrl}`;
 
-      channel.sendMessage({
-        text: `I've started a video call. Join me here: ${callUrl}`,
+      try {
+        await channel.sendMessage({
+          text: encryptMessage(callText),
+          call_link: callUrl,
+          call_type: 'audio'
+        });
+
+        toast.success("Initiating audio call...");
+        navigate(`/call/${channel.id}?type=audio`);
+      } catch (error) {
+        console.error("Error starting call:", error);
+        toast.error("Failed to start call");
+      }
+    }
+  };
+
+  const handleVideoCall = async () => {
+    if (channel) {
+      const callUrl = `${window.location.origin}/call/${channel.id}?type=video`;
+      const callText = `Incoming video call... Join here: ${callUrl}`;
+
+      try {
+        await channel.sendMessage({
+          text: encryptMessage(callText),
+          call_link: callUrl,
+          call_type: 'video'
+        });
+
+        toast.success("Initiating video call...");
+        navigate(`/call/${channel.id}?type=video`);
+      } catch (error) {
+        console.error("Error starting call:", error);
+        toast.error("Failed to start call");
+      }
+    }
+  };
+
+  const overrideMessage = (message) => {
+    return {
+      ...message,
+      text: encryptMessage(message.text),
+    };
+  };
+
+  const handleSendVoice = async (blob) => {
+    if (!channel) return;
+
+    try {
+      const filename = `voice_${Date.now()}.webm`;
+      const file = new File([blob], filename, { type: "audio/webm" });
+
+      const response = await channel.sendFile(file);
+
+      await channel.sendMessage({
+        text: encryptMessage("Sent a voice message"),
+        attachments: [
+          {
+            type: "voice",
+            asset_url: response.file,
+            file_size: file.size,
+            mime_type: file.type,
+            title: filename,
+          },
+        ],
       });
-
-      toast.success("Video call link sent successfully!");
+      toast.success("Voice message sent!");
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      toast.error("Failed to send voice message.");
     }
   };
 
   if (loading || !chatClient || !channel) return <ChatLoader />;
 
   return (
-    <div className="h-full">
-      <Chat client={chatClient}>
-        <Channel channel={channel}>
-          <div className="w-full relative">
-            <CallButton handleVideoCall={handleVideoCall} />
+    <div className="h-full flex flex-col bg-[#e5ddd5]">
+      <Chat client={chatClient} theme="messaging light">
+        <Channel
+          channel={channel}
+          Message={CustomMessage}
+          TypingIndicator={() => null}
+          enableMessagesPositionRendering={true}
+        >
+          <div className="w-full relative flex-1 flex flex-col h-full bg-transparent">
             <Window>
-              <ChannelHeader />
-              <MessageList />
-              <MessageInput focus />
+              <WhatsAppHeader>
+                <CallButton handleVideoCall={handleVideoCall} handleAudioCall={handleAudioCall} />
+              </WhatsAppHeader>
+
+              <div className="bg-warning/10 py-1.5 px-4 flex items-center justify-center gap-2 border-b border-warning/20">
+                <Lock className="size-3 text-warning" />
+                <span className="text-[10px] sm:text-xs opacity-70">
+                  Messages are end-to-end encrypted. No one outside of this chat can read them.
+                </span>
+              </div>
+
+              <MessageList Message={CustomMessage} />
+
+              <div className="flex items-end gap-2 p-2 bg-transparent sticky bottom-0">
+                <div className="flex-1 flex items-center bg-base-100 rounded-[24px] px-2 py-1 shadow-sm border border-base-300/50">
+                  <MessageInput
+                    focus
+                    grow
+                    overrideSubmitHandler={(message) => channel.sendMessage(overrideMessage(message))}
+                  />
+                </div>
+                <div className="mb-0.5">
+                  <VoiceRecorder onSendVoice={handleSendVoice} />
+                </div>
+              </div>
             </Window>
           </div>
-          <Thread />
+          <Thread Message={CustomMessage} />
         </Channel>
       </Chat>
     </div>

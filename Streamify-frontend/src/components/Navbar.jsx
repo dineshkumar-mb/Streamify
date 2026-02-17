@@ -58,17 +58,21 @@ const Navbar = ({ onOpenSidebar }) => {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link to={"/"} className="hidden sm:inline-block">
-              <button className="btn btn-ghost btn-circle">
-                <HomeIcon className="h-6 w-6 text-base-content opacity-70" />
-              </button>
-            </Link>
+            <div className="tooltip tooltip-bottom" data-tip="Home">
+              <Link to={"/"} className="hidden sm:inline-block">
+                <button className="btn btn-ghost btn-circle">
+                  <HomeIcon className="h-6 w-6 text-base-content opacity-70" />
+                </button>
+              </Link>
+            </div>
 
-            <Link to={"/notifications"} className="hidden sm:inline-block">
-              <button className="btn btn-ghost btn-circle">
-                <BellIcon className="h-6 w-6 text-base-content opacity-70" />
-              </button>
-            </Link>
+            <div className="tooltip tooltip-bottom" data-tip="Notifications">
+              <Link to={"/notifications"} className="hidden sm:inline-block">
+                <button className="btn btn-ghost btn-circle">
+                  <BellIcon className="h-6 w-6 text-base-content opacity-70" />
+                </button>
+              </Link>
+            </div>
 
             {/* TODO */}
             <ThemeSelector />
@@ -80,9 +84,11 @@ const Navbar = ({ onOpenSidebar }) => {
             </div>
 
             {/* Logout button */}
-            <button className="btn btn-ghost btn-circle" onClick={logoutMutation}>
-              <LogOutIcon className="h-6 w-6 text-base-content opacity-70" />
-            </button>
+            <div className="tooltip tooltip-bottom" data-tip="Logout">
+              <button className="btn btn-ghost btn-circle" onClick={logoutMutation}>
+                <LogOutIcon className="h-6 w-6 text-base-content opacity-70" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

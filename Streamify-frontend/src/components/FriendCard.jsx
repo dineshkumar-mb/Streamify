@@ -6,9 +6,10 @@ const FriendCard = ({ friend }) => {
     <div className="card bg-base-200 hover:shadow-md transition-shadow">
       <div className="card-body p-4">
         {/* USER INFO */}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="avatar size-12">
-            <img src={friend.profilePic} alt={friend.fullName} />
+        <div className="flex items-center gap-3 mb-3 relative">
+          <div className="avatar size-12 relative">
+            <img src={friend.profilePic} alt={friend.fullName} className="rounded-full" />
+            <span className="absolute bottom-0 right-0 size-3 bg-success rounded-full border-2 border-base-200" title="Online" />
           </div>
           <h3 className="font-semibold truncate">{friend.fullName}</h3>
         </div>
