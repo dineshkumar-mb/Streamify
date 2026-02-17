@@ -14,12 +14,29 @@ router.post("/reset-password/:resetToken", resetPassword);
 // Protected route
 router.get("/me", protectRoute, getAuthUser);
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.get("/google", (req, res, next) => {
+    // Dynamically determine the callback URL based on the request protocol and host
+    const callbackURL = `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
+        callbackURL
+    })(req, res, next);
+});
 
-router.get(
-    "/google/callback",
-    passport.authenticate("google", { failureRedirect: "/login", session: false }),
-    googleAuthCallback
-);
+router.get("/google/callback", (req, res, next) => {
+    const callbackURL = `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+    passport.authenticate("google", {
+        failureRedirect: "/login",
+        session: false,
+        callbackURL
+    }, (err, user, info) => {
+        if (err || !user) {
+            const clientUrl = `${req.protocol}://${req.get("host")}`;
+            return res.redirect(`${clientUrl}/login?error=GoogleAuthFailed`);
+        }
+        req.user = user;
+        googleAuthCallback(req, res);
+    })(req, res, next);
+});
 
 export default router;

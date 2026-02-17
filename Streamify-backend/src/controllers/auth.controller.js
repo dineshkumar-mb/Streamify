@@ -264,25 +264,18 @@ export const googleAuthCallback = (req, res) => {
       secure: process.env.NODE_ENV !== "development",
     });
 
-    // Dynamic CLIENT_URL selection based on NODE_ENV and host
-    const isDev = process.env.NODE_ENV === "development";
-    let clientUrl = isDev
-      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
-      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+    // Dynamic CLIENT_URL selection based on the request origin
+    // This is the most reliable way as it works for both localhost and production
+    const clientUrl = req.get("origin") || `${req.protocol}://${req.get("host")}`;
 
-    // Double check if we are running in production but accessing via local host (edge case)
-    if (req.headers.host && req.headers.host.includes('localhost')) {
-      // If the request comes from localhost even in "production" mode, we might want to redirect back to local frontend
-    }
+    // Safety check for production (e.g. if origin is missing or mismatch)
+    const finalUrl = clientUrl.includes('localhost') ? clientUrl : (process.env.CLIENT_URL_PROD || clientUrl);
 
-    res.redirect(`${clientUrl.replace(/\/$/, '')}`);
+    res.redirect(`${finalUrl.replace(/\/$/, '')}`);
 
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    const isDev = process.env.NODE_ENV === "development";
-    const clientUrl = isDev
-      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
-      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+    const clientUrl = req.get("origin") || `${req.protocol}://${req.get("host")}`;
     res.redirect(`${clientUrl.replace(/\/$/, '')}/login?error=GoogleAuthFailed`);
   }
 };
