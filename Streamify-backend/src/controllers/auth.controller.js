@@ -268,7 +268,7 @@ export const googleAuthCallback = (req, res) => {
       ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
       : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
 
-    res.redirect(`${clientUrl.replace(/\/$/, "")}`);
+    res.redirect(`${clientUrl.replace(/\/$/, "")}?token=${token}`);
 
   } catch (error) {
     console.error("Error in googleCallback:", error);

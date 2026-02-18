@@ -1,5 +1,5 @@
-import { Navigate, Route, Routes } from "react-router";
-import { lazy, Suspense } from "react";
+import { Navigate, Route, Routes, useSearchParams, useNavigate } from "react-router";
+import { lazy, Suspense, useEffect } from "react";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage.jsx"));
@@ -20,8 +20,20 @@ import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 
 const App = () => {
-  const { isLoading, authUser } = useAuthUser();
+  const { isLoading, authUser, checkAuth } = useAuthUser();
   const { theme } = useThemeStore();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      // Remove token from URL and refresh auth state
+      navigate("/", { replace: true });
+      checkAuth();
+    }
+  }, [searchParams, navigate, checkAuth]);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
