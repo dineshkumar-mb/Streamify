@@ -31,8 +31,10 @@ router.get("/google/callback", (req, res, next) => {
         callbackURL
     }, (err, user, info) => {
         if (err || !user) {
-            const clientUrl = `${req.protocol}://${req.get("host")}`;
-            return res.redirect(`${clientUrl}/login?error=GoogleAuthFailed`);
+            const clientUrl = process.env.NODE_ENV === "development"
+                ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
+                : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+            return res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
         }
         req.user = user;
         googleAuthCallback(req, res);

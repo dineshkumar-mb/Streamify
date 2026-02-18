@@ -264,18 +264,18 @@ export const googleAuthCallback = (req, res) => {
       secure: process.env.NODE_ENV !== "development",
     });
 
-    // Dynamic CLIENT_URL selection based on the request origin
-    // This is the most reliable way as it works for both localhost and production
-    const clientUrl = req.get("origin") || `${req.protocol}://${req.get("host")}`;
+    const clientUrl = process.env.NODE_ENV === "development"
+      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
+      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
 
-    // Safety check for production (e.g. if origin is missing or mismatch)
-    const finalUrl = clientUrl.includes('localhost') ? clientUrl : (process.env.CLIENT_URL_PROD || clientUrl);
-
-    res.redirect(`${finalUrl.replace(/\/$/, '')}`);
+    res.redirect(`${clientUrl.replace(/\/$/, "")}`);
 
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    const clientUrl = req.get("origin") || `${req.protocol}://${req.get("host")}`;
-    res.redirect(`${clientUrl.replace(/\/$/, '')}/login?error=GoogleAuthFailed`);
+    const clientUrl = process.env.NODE_ENV === "development"
+      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
+      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+
+    res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
   }
 };
