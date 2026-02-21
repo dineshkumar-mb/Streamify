@@ -9,10 +9,12 @@ const CallPage = lazy(() => import("./pages/CallPage.jsx"));
 const ChatPage = lazy(() => import("./pages/ChatPage.jsx"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage.jsx"));
 const FriendsPage = lazy(() => import("./pages/FriendsPage.jsx"));
+const ChatsPage = lazy(() => import("./pages/ChatsPage.jsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage.jsx"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage.jsx"));
 
 import { Toaster } from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
@@ -20,10 +22,11 @@ import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 
 const App = () => {
-  const { isLoading, authUser, checkAuth } = useAuthUser();
+  const { isLoading, authUser } = useAuthUser();
   const { theme } = useThemeStore();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -31,9 +34,9 @@ const App = () => {
       localStorage.setItem("token", token);
       // Remove token from URL and refresh auth state
       navigate("/", { replace: true });
-      checkAuth();
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
     }
-  }, [searchParams, navigate, checkAuth]);
+  }, [searchParams, navigate, queryClient]);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
@@ -94,6 +97,18 @@ const App = () => {
               isAuthenticated && isOnboarded ? (
                 <Layout showSidebar={true}>
                   <FriendsPage />
+                </Layout>
+              ) : (
+                <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+              )
+            }
+          />
+          <Route
+            path="/chats"
+            element={
+              isAuthenticated && isOnboarded ? (
+                <Layout showSidebar={true}>
+                  <ChatsPage />
                 </Layout>
               ) : (
                 <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

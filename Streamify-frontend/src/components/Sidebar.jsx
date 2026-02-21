@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, X } from "lucide-react";
+import { BellIcon, HomeIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, X } from "lucide-react";
 
 const Sidebar = ({ closeSidebar = null }) => {
   const { authUser } = useAuthUser();
@@ -47,6 +47,16 @@ const Sidebar = ({ closeSidebar = null }) => {
         >
           <UsersIcon className="size-5 text-base-content opacity-70" />
           <span>Friends</span>
+        </Link>
+
+        <Link
+          to="/chats"
+          onClick={handleLinkClick}
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/chats" ? "btn-active" : ""
+            }`}
+        >
+          <MessageCircleIcon className="size-5 text-base-content opacity-70" />
+          <span>Chats</span>
         </Link>
 
         <Link

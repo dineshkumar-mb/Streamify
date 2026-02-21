@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
-import { getStreamToken } from "../lib/api";
+import { getStreamToken, submitCallRating } from "../lib/api";
+import toast from "react-hot-toast";
+import PageLoader from "../components/PageLoader";
+import CallRatingModal from "../components/CallRatingModal";
 
 import {
   StreamVideo,
@@ -16,8 +19,6 @@ import {
 } from "@stream-io/video-react-sdk";
 
 import "@stream-io/video-react-sdk/dist/css/styles.css";
-import toast from "react-hot-toast";
-import PageLoader from "../components/PageLoader";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
@@ -42,8 +43,6 @@ const CallPage = () => {
       if (!authUser || !tokenData?.token) return;
 
       try {
-        console.log("Initializing Stream video client...");
-
         const videoClient = StreamVideoClient.getOrCreateInstance({
           apiKey: STREAM_API_KEY,
           user: {
@@ -55,16 +54,15 @@ const CallPage = () => {
         });
 
         const urlParams = new URLSearchParams(window.location.search);
-        const callType = urlParams.get('type') || 'video';
+        const callType = urlParams.get("type") || "video";
 
         const newCall = videoClient.call("default", callId);
         await newCall.join({ create: true });
 
-        if (callType === 'audio') {
+        if (callType === "audio") {
           await newCall.camera.disable();
         }
 
-        console.log("Joined call successfully");
         activeCall = newCall;
         setClient(videoClient);
         setCall(newCall);
@@ -98,23 +96,88 @@ const CallPage = () => {
   return (
     <StreamVideo client={client}>
       <StreamCall call={call}>
-        <CallContent />
+        <CallContent call={call} />
       </StreamCall>
     </StreamVideo>
   );
 };
 
-const CallContent = () => {
-  const { useCallCallingState } = useCallStateHooks();
+// ─── Inner component — has access to Stream call state hooks ───
+
+const CallContent = ({ call }) => {
+  const { useCallCallingState, useParticipants } = useCallStateHooks();
   const callingState = useCallCallingState();
+  const participants = useParticipants();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
-  const isAudioCall = new URLSearchParams(window.location.search).get('type') === 'audio';
+  const [showRating, setShowRating] = useState(false);
+  const [ratedUser, setRatedUser] = useState(null);
+  // useRef to snapshot participants list before call ends — participants may be empty on LEFT
+  const participantsSnap = useState(() => [])[0];
+  useEffect(() => {
+    if (participants.length > 0) {
+      participantsSnap.splice(0, participantsSnap.length, ...participants);
+    }
+  }, [participants]); // eslint-disable-line
 
-  if (callingState === CallingState.LEFT) {
+  const callId = call?.id;
+  const callType = new URLSearchParams(window.location.search).get("type") || "video";
+  const isAudioCall = callType === "audio";
+
+  // When call leaves, show rating instead of immediately navigating
+  useEffect(() => {
+    if (callingState === CallingState.LEFT) {
+      // Use snapshot because live participants list may be empty by the time LEFT fires
+      const other = participantsSnap.find((p) => p.userId !== authUser?._id);
+      if (other) {
+        setRatedUser({
+          id: other.userId,
+          name: other.name || "Your partner",
+          image: other.image,
+        });
+        setShowRating(true);
+      } else {
+        navigate("/");
+      }
+    }
+  }, [callingState]); // eslint-disable-line
+
+  const handleRatingSubmit = async (stars) => {
+    if (!ratedUser) return;
+    try {
+      await submitCallRating({
+        callId,
+        ratedUserId: ratedUser.id,
+        rating: stars,
+        callType,
+      });
+      toast.success("Thanks for your rating! ⭐");
+    } catch (err) {
+      console.error("Rating submit failed:", err);
+      toast.error("Could not save rating, but that's okay!");
+    } finally {
+      navigate("/");
+    }
+  };
+
+  const handleSkip = () => {
     navigate("/");
-    return null;
+  };
+
+  // Show rating modal after call ends
+  if (showRating) {
+    return (
+      <div className="h-screen bg-black">
+        <CallRatingModal
+          callId={callId}
+          callType={callType}
+          ratedUser={ratedUser}
+          onSubmit={handleRatingSubmit}
+          onSkip={handleSkip}
+        />
+      </div>
+    );
   }
 
   return (
@@ -133,7 +196,7 @@ const CallContent = () => {
         )}
         <SpeakerLayout />
         <div className="pb-10">
-          <CallControls onLeave={() => navigate(-1)} />
+          <CallControls onLeave={() => call.leave()} />
         </div>
       </div>
     </StreamTheme>

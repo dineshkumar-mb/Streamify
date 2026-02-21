@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { getUserFriends } from "../lib/api";
+import { getUserFriends, getStreamToken } from "../lib/api";
 import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
 import { Users } from "lucide-react";
 import CreateGroupModal from "../components/CreateGroupModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StreamChat } from "stream-chat";
 import useAuthUser from "../hooks/useAuthUser";
-import { getStreamToken } from "../lib/api";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
 const FriendsPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [chatClient, setChatClient] = useState(null);
     const { authUser } = useAuthUser();
 
     const { data: friends = [], isLoading } = useQuery({
@@ -26,16 +26,37 @@ const FriendsPage = () => {
         enabled: !!authUser,
     });
 
-    if (isLoading) return <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg" /></div>;
+    // Safely connect Stream client inside useEffect to avoid "already connected" errors
+    useEffect(() => {
+        if (!tokenData?.token || !authUser) return;
 
-    const chatClient = tokenData?.token ? StreamChat.getInstance(STREAM_API_KEY) : null;
-    if (chatClient && authUser) {
-        chatClient.connectUser({
-            id: authUser._id,
-            name: authUser.fullName,
-            image: authUser.profilePic
-        }, tokenData.token);
-    }
+        const connectClient = async () => {
+            try {
+                const client = StreamChat.getInstance(STREAM_API_KEY);
+                if (!client.userID) {
+                    await client.connectUser(
+                        {
+                            id: authUser._id,
+                            name: authUser.fullName,
+                            image: authUser.profilePic,
+                        },
+                        tokenData.token
+                    );
+                }
+                setChatClient(client);
+            } catch (err) {
+                console.error("Stream connect error:", err);
+            }
+        };
+
+        connectClient();
+    }, [tokenData, authUser]);
+
+    if (isLoading) return (
+        <div className="flex justify-center py-12">
+            <span className="loading loading-spinner loading-lg" />
+        </div>
+    );
 
     return (
         <div className="h-full bg-base-100">

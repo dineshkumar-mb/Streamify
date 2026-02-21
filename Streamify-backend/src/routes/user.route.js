@@ -7,6 +7,8 @@ import {
   getOutgoingFriendReqs,
   getRecommendedUsers,
   sendFriendRequest,
+  submitCallRating,
+  getUserRating,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -22,5 +24,8 @@ router.put("/friend-request/:id/accept", acceptFriendRequest);
 
 router.get("/friend-requests", getFriendRequests);
 router.get("/outgoing-friend-requests", getOutgoingFriendReqs);
+
+router.post("/call-rating", submitCallRating);
+router.get("/call-rating/:userId", getUserRating);
 
 export default router;

@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import CallRating from "../models/CallRating.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -143,6 +144,49 @@ export async function getOutgoingFriendReqs(req, res) {
     res.status(200).json(outgoingRequests);
   } catch (error) {
     console.log("Error in getOutgoingFriendReqs controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function submitCallRating(req, res) {
+  try {
+    const { callId, ratedUserId, rating, callType } = req.body;
+
+    if (!callId || !ratedUserId || !rating) {
+      return res.status(400).json({ message: "callId, ratedUserId and rating are required" });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+
+    // Upsert so user can't submit multiple ratings for the same call
+    await CallRating.findOneAndUpdate(
+      { callId, raterId: req.user.id },
+      { callId, raterId: req.user.id, ratedUserId, rating, callType: callType || "video" },
+      { upsert: true, new: true }
+    );
+
+    res.status(201).json({ message: "Rating submitted successfully" });
+  } catch (error) {
+    console.error("Error in submitCallRating controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function getUserRating(req, res) {
+  try {
+    const { userId } = req.params;
+    const ratings = await CallRating.find({ ratedUserId: userId });
+
+    const count = ratings.length;
+    const average = count > 0
+      ? (ratings.reduce((sum, r) => sum + r.rating, 0) / count).toFixed(1)
+      : null;
+
+    res.status(200).json({ average, count });
+  } catch (error) {
+    console.error("Error in getUserRating controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

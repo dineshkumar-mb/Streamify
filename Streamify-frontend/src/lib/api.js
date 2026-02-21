@@ -65,3 +65,13 @@ export async function getStreamToken() {
   const response = await axiosInstance.get("/chat/token");
   return response.data;
 }
+
+export async function submitCallRating({ callId, ratedUserId, rating, callType }) {
+  const response = await axiosInstance.post("/users/call-rating", {
+    callId,
+    ratedUserId,
+    rating,
+    callType,
+  });
+  return response.data;
+}
