@@ -75,3 +75,23 @@ export async function submitCallRating({ callId, ratedUserId, rating, callType }
   });
   return response.data;
 }
+
+export async function saveMessage({ receiverId, content, messageType, streamMsgId }) {
+  const response = await axiosInstance.post("/messages", {
+    receiverId,
+    content,
+    messageType,
+    streamMsgId,
+  });
+  return response.data;
+}
+
+export async function getMongoMessages(userId) {
+  const response = await axiosInstance.get(`/messages/${userId}`);
+  return response.data;
+}
+
+export async function getMongoConversations() {
+  const response = await axiosInstance.get("/messages/conversations");
+  return response.data;
+}

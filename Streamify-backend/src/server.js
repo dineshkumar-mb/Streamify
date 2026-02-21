@@ -7,6 +7,7 @@ import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
+import messageRoutes from "./routes/message.route.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -52,6 +53,7 @@ app.use(passport.initialize());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).send("OK");

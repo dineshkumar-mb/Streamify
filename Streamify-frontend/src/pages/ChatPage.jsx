@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
-import { getStreamToken } from "../lib/api";
+import { getStreamToken, saveMessage } from "../lib/api";
 import { Lock } from "lucide-react";
 
 import {
@@ -46,8 +46,6 @@ const ChatPage = () => {
       if (!tokenData?.token || !authUser) return;
 
       try {
-        console.log("Initializing stream chat client...");
-
         const client = StreamChat.getInstance(STREAM_API_KEY);
 
         await client.connectUser(
@@ -78,20 +76,40 @@ const ChatPage = () => {
     };
 
     initChat();
-  }, [tokenData, authUser, targetUserId, STREAM_API_KEY]);
+  }, [tokenData, authUser, targetUserId]);
+
+  // ── Persist a message to MongoDB silently (fire-and-forget) ──
+  const persistToMongo = async ({ content, messageType = "text", streamMsgId }) => {
+    try {
+      await saveMessage({
+        receiverId: targetUserId,
+        content,
+        messageType,
+        streamMsgId,
+      });
+    } catch (err) {
+      // Non-blocking — Stream has the message even if MongoDB save fails
+      console.warn("MongoDB message save failed (non-critical):", err.message);
+    }
+  };
 
   const handleAudioCall = async () => {
     if (channel) {
       const callUrl = `${window.location.origin}/call/${channel.id}?type=audio`;
       const callText = `Incoming audio call... Join here: ${callUrl}`;
+      const encrypted = encryptMessage(callText);
 
       try {
-        await channel.sendMessage({
-          text: encryptMessage(callText),
+        const res = await channel.sendMessage({
+          text: encrypted,
           call_link: callUrl,
-          call_type: 'audio'
+          call_type: "audio",
         });
-
+        await persistToMongo({
+          content: encrypted,
+          messageType: "call",
+          streamMsgId: res.message?.id,
+        });
         toast.success("Initiating audio call...");
         navigate(`/call/${channel.id}?type=audio`);
       } catch (error) {
@@ -105,14 +123,19 @@ const ChatPage = () => {
     if (channel) {
       const callUrl = `${window.location.origin}/call/${channel.id}?type=video`;
       const callText = `Incoming video call... Join here: ${callUrl}`;
+      const encrypted = encryptMessage(callText);
 
       try {
-        await channel.sendMessage({
-          text: encryptMessage(callText),
+        const res = await channel.sendMessage({
+          text: encrypted,
           call_link: callUrl,
-          call_type: 'video'
+          call_type: "video",
         });
-
+        await persistToMongo({
+          content: encrypted,
+          messageType: "call",
+          streamMsgId: res.message?.id,
+        });
         toast.success("Initiating video call...");
         navigate(`/call/${channel.id}?type=video`);
       } catch (error) {
@@ -122,11 +145,22 @@ const ChatPage = () => {
     }
   };
 
-  const overrideMessage = (message) => {
-    return {
-      ...message,
-      text: encryptMessage(message.text),
-    };
+  // Override Stream's submit: encrypt → send to Stream → persist to MongoDB
+  const overrideSubmitHandler = async (message) => {
+    const encrypted = encryptMessage(message.text);
+    const overridden = { ...message, text: encrypted };
+
+    try {
+      const res = await channel.sendMessage(overridden);
+      await persistToMongo({
+        content: encrypted,
+        messageType: "text",
+        streamMsgId: res.message?.id,
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
   };
 
   const handleSendVoice = async (blob) => {
@@ -135,11 +169,11 @@ const ChatPage = () => {
     try {
       const filename = `voice_${Date.now()}.webm`;
       const file = new File([blob], filename, { type: "audio/webm" });
-
       const response = await channel.sendFile(file);
 
-      await channel.sendMessage({
-        text: encryptMessage("Sent a voice message"),
+      const encrypted = encryptMessage("Sent a voice message");
+      const res = await channel.sendMessage({
+        text: encrypted,
         attachments: [
           {
             type: "voice",
@@ -150,6 +184,13 @@ const ChatPage = () => {
           },
         ],
       });
+
+      await persistToMongo({
+        content: response.file, // store the voice URL as content
+        messageType: "voice",
+        streamMsgId: res.message?.id,
+      });
+
       toast.success("Voice message sent!");
     } catch (error) {
       console.error("Error sending voice message:", error);
@@ -188,7 +229,7 @@ const ChatPage = () => {
                   <MessageInput
                     focus
                     grow
-                    overrideSubmitHandler={(message) => channel.sendMessage(overrideMessage(message))}
+                    overrideSubmitHandler={overrideSubmitHandler}
                   />
                 </div>
                 <div className="mb-0.5">
