@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useSearchParams, useNavigate } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense, useEffect } from "react";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
@@ -24,19 +24,12 @@ import { useThemeStore } from "./store/useThemeStore.js";
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
   const { theme } = useThemeStore();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Clean up any legacy token that may have been stored in localStorage
   useEffect(() => {
-    const token = searchParams.get("token");
-    if (token) {
-      localStorage.setItem("token", token);
-      // Remove token from URL and refresh auth state
-      navigate("/", { replace: true });
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    }
-  }, [searchParams, navigate, queryClient]);
+    localStorage.removeItem("token");
+  }, []);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;

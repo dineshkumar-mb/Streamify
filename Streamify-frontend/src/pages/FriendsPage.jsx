@@ -61,11 +61,11 @@ const FriendsPage = () => {
     return (
         <div className="h-full bg-base-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">My Friends</h1>
+                <div className="flex flex-wrap gap-3 justify-between items-center mb-6 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold">My Friends</h1>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="btn btn-primary gap-2"
+                        className="btn btn-primary btn-sm sm:btn-md gap-2"
                     >
                         <Users className="size-5" />
                         New Group

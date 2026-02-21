@@ -1,6 +1,8 @@
 import Message from "../models/Message.js";
 import Conversation from "../models/Conversation.js";
 
+const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
+
 /**
  * POST /api/messages
  * Save a message to MongoDB and upsert the conversation.
@@ -14,7 +16,14 @@ export async function saveMessage(req, res) {
             return res.status(400).json({ message: "receiverId and content are required" });
         }
 
-        // Find or create conversation between the two users
+        if (!isValidObjectId(receiverId)) {
+            return res.status(400).json({ message: "Invalid receiverId" });
+        }
+
+        // Cap content length and validate type
+        const safeContent = String(content).slice(0, 5000);
+        const safeType = ["text", "voice", "call"].includes(messageType) ? messageType : "text";
+
         let conversation = await Conversation.findOne({
             participants: { $all: [senderId, receiverId], $size: 2 },
         });
@@ -22,19 +31,18 @@ export async function saveMessage(req, res) {
         if (!conversation) {
             conversation = await Conversation.create({
                 participants: [senderId, receiverId],
-                lastMessage: content,
+                lastMessage: safeContent,
                 lastMessageAt: new Date(),
-                lastMessageType: messageType,
+                lastMessageType: safeType,
             });
         } else {
-            // Update last message
-            conversation.lastMessage = content;
+            conversation.lastMessage = safeContent;
             conversation.lastMessageAt = new Date();
-            conversation.lastMessageType = messageType;
+            conversation.lastMessageType = safeType;
             await conversation.save();
         }
 
-        // Save message — skip if this streamMsgId was already stored
+        // Save message — upsert by streamMsgId to prevent duplicates
         let message;
         if (streamMsgId) {
             message = await Message.findOneAndUpdate(
@@ -43,8 +51,8 @@ export async function saveMessage(req, res) {
                     conversationId: conversation._id,
                     sender: senderId,
                     receiver: receiverId,
-                    content,
-                    messageType,
+                    content: safeContent,
+                    messageType: safeType,
                     streamMsgId,
                 },
                 { upsert: true, new: true }
@@ -54,8 +62,8 @@ export async function saveMessage(req, res) {
                 conversationId: conversation._id,
                 sender: senderId,
                 receiver: receiverId,
-                content,
-                messageType,
+                content: safeContent,
+                messageType: safeType,
             });
         }
 
@@ -97,6 +105,13 @@ export async function getMessages(req, res) {
         const { userId: otherId } = req.params;
         const { limit = 100, before } = req.query;
 
+        if (!isValidObjectId(otherId)) {
+            return res.status(400).json({ message: "Invalid userId" });
+        }
+
+        // Cap limit to prevent large data dumps
+        const safeLimit = Math.min(Number(limit) || 100, 200);
+
         const conversation = await Conversation.findOne({
             participants: { $all: [myId, otherId], $size: 2 },
         });
@@ -112,7 +127,7 @@ export async function getMessages(req, res) {
 
         const messages = await Message.find(query)
             .sort({ createdAt: 1 })
-            .limit(Number(limit))
+            .limit(safeLimit)
             .populate("sender", "fullName profilePic")
             .populate("receiver", "fullName profilePic");
 

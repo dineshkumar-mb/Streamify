@@ -71,7 +71,7 @@ const OnboardingPage = () => {
 
               {/* Generate Random Avatar BTN */}
               <div className="flex items-center gap-2">
-                <button type="button" onClick={handleRandomAvatar} className="btn btn-accent">
+                <button type="button" onClick={handleRandomAvatar} className="btn btn-accent w-full sm:w-auto">
                   <ShuffleIcon className="size-4 mr-2" />
                   Generate Random Avatar
                 </button>
@@ -102,7 +102,7 @@ const OnboardingPage = () => {
                 name="bio"
                 value={formState.bio}
                 onChange={(e) => setFormState({ ...formState, bio: e.target.value })}
-                className="textarea textarea-bordered h-24"
+                className="textarea textarea-bordered h-24 w-full"
                 placeholder="Tell others about yourself and your language learning goals"
               />
             </div>

@@ -4,6 +4,22 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
 
+/* ─── helpers ────────────────────────────────────────────── */
+
+const setTokenCookie = (res, token) => {
+  res.cookie("jwt", token, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
+    secure: process.env.NODE_ENV !== "development",
+  });
+};
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
+
+/* ─── controllers ────────────────────────────────────────── */
+
 export async function signup(req, res) {
   const { email, password, fullName } = req.body;
 
@@ -12,27 +28,29 @@ export async function signup(req, res) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Truncate inputs to prevent oversized strings
+    const safeEmail = String(email).toLowerCase().slice(0, 254);
+    const safeFullName = String(fullName).slice(0, 100);
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: safeEmail });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists, please use a diffrent one" });
+      return res.status(400).json({ message: "Email already exists, please use a different one" });
     }
 
-    const idx = Math.floor(Math.random() * 100) + 1; // generate a num between 1-100
+    const idx = Math.floor(Math.random() * 100) + 1;
     const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${idx}`;
 
     const newUser = await User.create({
-      email,
-      fullName,
+      email: safeEmail,
+      fullName: safeFullName,
       password,
       profilePic: randomAvatar,
     });
@@ -43,31 +61,29 @@ export async function signup(req, res) {
         name: newUser.fullName,
         image: newUser.profilePic || "",
       });
-      console.log(`Stream user created for ${newUser.fullName}`);
-    } catch (error) {
-      console.log("Error creating Stream user:", error);
+    } catch (err) {
+      console.error("Error creating Stream user:", err.message);
     }
 
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "7d",
     });
 
-    res.cookie("jwt", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevent XSS attacks,
-      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none", // prevent CSRF attacks
-      secure: process.env.NODE_ENV !== "development",
-    });
+    setTokenCookie(res, token);
 
-    res.status(201).json({ success: true, user: newUser, token });
+    // Never expose password or token in response body
+    const { password: _, ...userWithoutPassword } = newUser.toObject();
+    res.status(201).json({ success: true, user: userWithoutPassword });
   } catch (error) {
-    console.log("Error in signup controller", error);
+    console.error("Error in signup controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
 export const getAuthUser = (req, res) => {
   res.status(200).json({ user: req.user });
 };
+
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -76,27 +92,34 @@ export async function login(req, res) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const safeEmail = String(email).toLowerCase().slice(0, 254);
+    const user = await User.findOne({ email: safeEmail });
+
+    // Generic message — don't reveal whether email exists
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const isPasswordCorrect = await user.matchPassword(password);
-    if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid email or password" });
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "7d",
     });
 
-    res.cookie("jwt", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevent XSS attacks,
-      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-      secure: process.env.NODE_ENV !== "development",
-    });
+    setTokenCookie(res, token);
 
-    res.status(200).json({ success: true, user, token });
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ success: true, user: userWithoutPassword });
   } catch (error) {
-    console.log("Error in login controller", error.message);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("Error in login controller:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
@@ -113,7 +136,8 @@ export async function onboard(req, res) {
   try {
     const userId = req.user._id;
 
-    const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
+    // ✅ Explicitly pick only safe fields — never spread req.body into DB
+    const { fullName, bio, nativeLanguage, learningLanguage, location, profilePic } = req.body;
 
     if (!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
       return res.status(400).json({
@@ -128,14 +152,19 @@ export async function onboard(req, res) {
       });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        ...req.body,
-        isOnboarded: true,
-      },
-      { new: true }
-    );
+    // Sanitize lengths
+    const updateData = {
+      fullName: String(fullName).slice(0, 100),
+      bio: String(bio).slice(0, 500),
+      nativeLanguage: String(nativeLanguage).slice(0, 50),
+      learningLanguage: String(learningLanguage).slice(0, 50),
+      location: String(location).slice(0, 100),
+      isOnboarded: true,
+    };
+
+    if (profilePic) updateData.profilePic = String(profilePic).slice(0, 500);
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
 
     if (!updatedUser) return res.status(404).json({ message: "User not found" });
 
@@ -145,9 +174,8 @@ export async function onboard(req, res) {
         name: updatedUser.fullName,
         image: updatedUser.profilePic || "",
       });
-      console.log(`Stream user updated after onboarding for ${updatedUser.fullName}`);
     } catch (streamError) {
-      console.log("Error updating Stream user during onboarding:", streamError.message);
+      console.error("Error updating Stream user during onboarding:", streamError.message);
     }
 
     res.status(200).json({ success: true, user: updatedUser });
@@ -160,23 +188,24 @@ export async function onboard(req, res) {
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
+  // ✅ Always return 200 to prevent email enumeration
+  const safeResponse = () =>
+    res.status(200).json({ success: true, data: "If that email exists, a reset link has been sent." });
+
   try {
-    const user = await User.findOne({ email });
+    if (!email || !isValidEmail(email)) return safeResponse();
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const safeEmail = String(email).toLowerCase().slice(0, 254);
+    const user = await User.findOne({ email: safeEmail });
 
-    const resetToken = crypto.randomBytes(20).toString("hex");
+    // Don't leak whether the email exists
+    if (!user) return safeResponse();
 
-    // Hash token (private) and save to database
+    const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
     await user.save({ validateBeforeSave: false });
 
-    // Create reset url to frontend
-    // Dynamic CLIENT_URL selection based on origin
     const origin = req.headers.origin;
     const allowedOrigins = [
       "http://localhost:5173",
@@ -186,63 +215,66 @@ export const forgotPassword = async (req, res) => {
       "https://streamify-inky-one.vercel.app",
     ];
 
-    const clientUrl = allowedOrigins.includes(origin) ? origin : (process.env.CLIENT_URL || "http://localhost:5173");
+    const clientUrl = allowedOrigins.includes(origin)
+      ? origin
+      : process.env.CLIENT_URL || "http://localhost:5173";
     const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
     const message = `
-      <h1>You have requested a password reset</h1>
-      <p>Please go to this link to reset your password:</p>
-      <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
+      <h1>Password Reset Request</h1>
+      <p>Click the link below to reset your password. This link expires in 10 minutes.</p>
+      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+      <p>If you did not request this, please ignore this email.</p>
     `;
 
     try {
-      await sendEmail({
-        email: user.email,
-        subject: "Password Reset Request",
-        message,
-      });
-
-      res.status(200).json({ success: true, data: "Email sent" });
-    } catch (error) {
-      console.error("Error sending email in forgotPassword:", error);
+      await sendEmail({ email: user.email, subject: "Password Reset Request", message });
+    } catch (emailErr) {
+      console.error("Error sending reset email:", emailErr.message);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
-
       await user.save({ validateBeforeSave: false });
-
-      return res.status(500).json({ message: "Email could not be sent. Please try again later." });
     }
+
+    // Always return the same response regardless of outcome
+    return safeResponse();
   } catch (error) {
-    console.error("Critical Error in forgotPassword:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("Error in forgotPassword:", error);
+    return safeResponse(); // Still don't leak info
   }
 };
 
 export const resetPassword = async (req, res) => {
-  const resetPasswordToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
-
   try {
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(req.params.resetToken)
+      .digest("hex");
+
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid Token" });
+      return res.status(400).json({ message: "Invalid or expired reset token" });
     }
 
-    user.password = req.body.password;
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-
     await user.save();
 
-    res.status(201).json({
-      success: true,
-      message: "Password Reset Success",
-    });
+    res.status(200).json({ success: true, message: "Password reset successful" });
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("Error in resetPassword:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -250,31 +282,30 @@ export const googleAuthCallback = (req, res) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(401).json({ message: "Authentication failed" });
+      const fallback = process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
+      return res.redirect(`${fallback}/login?error=GoogleAuthFailed`);
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "7d",
     });
 
-    res.cookie("jwt", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-      secure: process.env.NODE_ENV !== "development",
-    });
+    // ✅ Set token as httpOnly cookie only — do NOT expose in URL
+    setTokenCookie(res, token);
 
-    const clientUrl = process.env.NODE_ENV === "development"
-      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
-      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+    const clientUrl =
+      process.env.NODE_ENV === "development"
+        ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
+        : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
 
-    res.redirect(`${clientUrl.replace(/\/$/, "")}?token=${token}`);
-
+    // Redirect without token in URL — frontend reads auth state from cookie
+    res.redirect(`${clientUrl.replace(/\/$/, "")}`);
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    const clientUrl = process.env.NODE_ENV === "development"
-      ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
-      : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+    const clientUrl =
+      process.env.NODE_ENV === "development"
+        ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
+        : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
 
     res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
   }

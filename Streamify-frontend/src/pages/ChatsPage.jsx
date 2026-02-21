@@ -121,7 +121,7 @@ const ChatsPage = () => {
     return (
         <div className="h-full flex flex-col bg-base-100">
             {/* Header */}
-            <div className="px-4 pt-6 pb-3 border-b border-base-300">
+            <div className="px-3 sm:px-4 pt-4 sm:pt-6 pb-3 border-b border-base-300">
                 <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
                     <MessageCircle className="size-6 text-primary" />
                     Chats

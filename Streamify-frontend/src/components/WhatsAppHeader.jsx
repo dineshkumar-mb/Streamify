@@ -41,8 +41,8 @@ const WhatsAppHeader = ({ children }) => {
                         )}
                     </div>
                 </div>
-                <div className="flex flex-col">
-                    <h3 className="font-bold text-sm leading-tight">{user.name}</h3>
+                <div className="flex flex-col min-w-0">
+                    <h3 className="font-bold text-sm leading-tight truncate">{user.name}</h3>
                     <p className={`text-[11px] ${getStatus() === "typing..." ? "text-primary font-medium" : "opacity-60"}`}>
                         {getStatus()}
                     </p>

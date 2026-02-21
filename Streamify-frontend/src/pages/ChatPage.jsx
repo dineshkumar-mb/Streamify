@@ -224,7 +224,7 @@ const ChatPage = () => {
 
               <MessageList Message={CustomMessage} />
 
-              <div className="flex items-end gap-2 p-2 bg-transparent sticky bottom-0">
+              <div className="flex items-end gap-2 px-2 sm:px-3 py-2 bg-transparent sticky bottom-0">
                 <div className="flex-1 flex items-center bg-base-100 rounded-[24px] px-2 py-1 shadow-sm border border-base-300/50">
                   <MessageInput
                     focus
