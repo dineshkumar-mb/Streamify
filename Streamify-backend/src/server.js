@@ -11,7 +11,7 @@ import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import messageRoutes from "./routes/message.route.js";
-import { authLimiter, apiLimiter } from "./middleware/rateLimiter.js";
+import { authLimiter, oauthLimiter, apiLimiter } from "./middleware/rateLimiter.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -99,8 +99,9 @@ import passport from "./lib/passport.js";
 app.use(passport.initialize());
 
 /* ── Rate Limiting ───────────────────────────────────────── */
-app.use("/api/auth", authLimiter);       // Strict — 10 req/15 min
-app.use("/api/users", apiLimiter);       // General — 100 req/15 min
+app.use("/api/auth/google", oauthLimiter);   // Lenient — OAuth redirects need headroom
+app.use("/api/auth", authLimiter);           // Strict — login/signup/forgot-password
+app.use("/api/users", apiLimiter);           // General — 100 req/15 min
 app.use("/api/messages", apiLimiter);
 app.use("/api/chat", apiLimiter);
 

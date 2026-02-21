@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage.jsx"));
@@ -14,7 +14,6 @@ const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage.jsx"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage.jsx"));
 
 import { Toaster } from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
 
 import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
@@ -24,12 +23,6 @@ import { useThemeStore } from "./store/useThemeStore.js";
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
   const { theme } = useThemeStore();
-  const queryClient = useQueryClient();
-
-  // Clean up any legacy token that may have been stored in localStorage
-  useEffect(() => {
-    localStorage.removeItem("token");
-  }, []);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;

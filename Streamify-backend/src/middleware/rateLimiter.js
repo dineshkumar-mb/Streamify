@@ -1,15 +1,27 @@
 import { rateLimit } from "express-rate-limit";
 
-// Strict limiter for auth endpoints (login, signup, forgot-password)
+// Strict limiter for sensitive auth endpoints (login, signup, forgot-password)
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10,
+    max: 20,
     message: {
         message: "Too many requests from this IP. Please try again after 15 minutes.",
     },
-    standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+    standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: false,
+    skipSuccessfulRequests: true, // Only count FAILED attempts (wrong password etc.)
+});
+
+// Lenient limiter for Google OAuth — redirects count as "requests" so needs higher ceiling
+export const oauthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: {
+        message: "Too many OAuth requests. Please try again after 15 minutes.",
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
 });
 
 // General API limiter — all other routes

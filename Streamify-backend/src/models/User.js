@@ -67,8 +67,9 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  const isPasswordCorrect = await bcrypt.compare(enteredPassword, this.password);
-  return isPasswordCorrect;
+  // OAuth users have no password — return false instead of crashing bcrypt
+  if (!this.password) return false;
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model("User", userSchema);
