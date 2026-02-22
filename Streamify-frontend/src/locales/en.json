@@ -1,0 +1,28 @@
+{
+    "navbar": {
+        "home": "Home",
+        "notifications": "Notifications",
+        "logout": "Logout",
+        "friends": "Friends",
+        "chats": "Chats",
+        "profile": "Profile"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "cancel": "Cancel"
+    },
+    "home": {
+        "yourFriends": "Your Friends",
+        "friendRequests": "Friend Requests",
+        "meetNewLearners": "Meet New Learners",
+        "discoverPartners": "Discover perfect language exchange partners based on your profile",
+        "noRecommendations": "No recommendations available",
+        "checkBackLater": "Check back later for new language partners!",
+        "native": "Native:",
+        "learning": "Learning:",
+        "requestSent": "Request Sent",
+        "sendFriendRequest": "Send Friend Request"
+    }
+}

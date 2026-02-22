@@ -1,0 +1,28 @@
+{
+    "navbar": {
+        "home": "मुख पृष्ठ",
+        "notifications": "सूचनाएं",
+        "logout": "लॉग आउट",
+        "friends": "दोस्त",
+        "chats": "चैट्स",
+        "profile": "प्रोफ़ाइल"
+    },
+    "common": {
+        "loading": "लोड हो रहा है...",
+        "error": "एक त्रुटि हुई",
+        "save": "सहेजें",
+        "cancel": "रद्द करें"
+    },
+    "home": {
+        "yourFriends": "आपके मित्र",
+        "friendRequests": "मित्र अनुरोध",
+        "meetNewLearners": "नए शिक्षार्थियों से मिलें",
+        "discoverPartners": "अपनी प्रोफ़ाइल के आधार पर पूर्ण भाषा विनिमय भागीदारों की खोज करें",
+        "noRecommendations": "कोई अनुशंसा उपलब्ध नहीं है",
+        "checkBackLater": "बाद में नए भाषा साझीदारों के लिए वापस जांचें!",
+        "native": "मातृभाषा:",
+        "learning": "सीख रहे हैं:",
+        "requestSent": "अनुरोध भेजा गया",
+        "sendFriendRequest": "मित्र अनुरोध भेजें"
+    }
+}

@@ -10,6 +10,11 @@ import {
   submitCallRating,
   getUserRating,
 } from "../controllers/user.controller.js";
+import {
+  getAvailableStickers,
+  downloadStickerPack,
+  removeStickerPack,
+} from "../controllers/sticker.controller.js";
 
 const router = express.Router();
 
@@ -27,5 +32,10 @@ router.get("/outgoing-friend-requests", getOutgoingFriendReqs);
 
 router.post("/call-rating", submitCallRating);
 router.get("/call-rating/:userId", getUserRating);
+
+// Sticker Routes
+router.get("/stickers", getAvailableStickers);
+router.post("/stickers/:packId/download", downloadStickerPack);
+router.delete("/stickers/:packId/remove", removeStickerPack);
 
 export default router;

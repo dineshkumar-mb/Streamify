@@ -1,0 +1,127 @@
+﻿
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v6.3.4 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : 
+Browserslist: browsers 
+data (caniuse-lite) is 
+10 months old. Please 
+run:
+At C:\Program Files\nod
+ejs\npm.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Browserslist:   
+  b...ld. Please ru    
+n::String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  npx update-browsersli
+st-db@latest
+  Why you should do it 
+regularly: https://gith
+ub.com/browserslist/upd
+ate-db#readme
+
+≡ƒî╝   [35mdaisyUI[39m [2m4.12.24[22m
+Γö£ΓöÇ [32mΓ£ö∩╕Ä[39m 32 themes added[2m		https://daisyui.com/docs/themes[22m
+Γò░ΓöÇ [32mΓ¥ñ∩╕Ä[39m [0mSupport daisyUI project:[0m	[2mhttps://opencollective.com/daisyui[22m
+
+
+≡ƒî╝   [35mdaisyUI[39m [2m4.12.24[22m
+Γö£ΓöÇ [32mΓ£ö∩╕Ä[39m 32 themes added[2m		https://daisyui.com/docs/themes[22m
+Γò░ΓöÇ [32mΓ¥ñ∩╕Ä[39m [0mSupport daisyUI project:[0m	[2mhttps://opencollective.com/daisyui[22m
+
+[32mΓ£ô[39m 1786 modules transformed.
+
+Γ£¿ [vite-plugin-compression]:algorithm=gzip - compressed file successfully: 
+dist/D:/Streamify/Streamify-frontend/output.css.gz   104.30kb / gzip: 19.03kb
+
+
+[31mΓ£ù[39m Build 
+failed in 3.54s
+[31merror during 
+build:
+[31m[vite]: Rollup 
+failed to resolve 
+import 
+"styled-components" 
+from "D:/Streamify/Stre
+amify-frontend/node_mod
+ules/@giphy/react-compo
+nents/dist/esm/index.js
+".
+This is most likely 
+unintended because it 
+can break your 
+application at runtime.
+If you do want to 
+externalize this 
+module explicitly add 
+it to
+`build.rollupOptions.ex
+ternal`[31m
+    at viteLog (file://
+/D:/Streamify/Streamify
+-frontend/node_modules/
+vite/dist/node/chunks/d
+ep-Bn81Esdm.js:46345:15
+)
+    at file:///D:/Strea
+mify/Streamify-frontend
+/node_modules/vite/dist
+/node/chunks/dep-Bn81Es
+dm.js:46403:18
+    at onwarn (file:///
+D:/Streamify/Streamify-
+frontend/node_modules/@
+vitejs/plugin-react/dis
+t/index.mjs:102:9)
+    at file:///D:/Strea
+mify/Streamify-frontend
+/node_modules/vite/dist
+/node/chunks/dep-Bn81Es
+dm.js:46401:7
+    at onRollupLog (fil
+e:///D:/Streamify/Strea
+mify-frontend/node_modu
+les/vite/dist/node/chun
+ks/dep-Bn81Esdm.js:4639
+3:5)
+    at onLog (file:///D
+:/Streamify/Streamify-f
+rontend/node_modules/vi
+te/dist/node/chunks/dep
+-Bn81Esdm.js:46043:7)
+    at file:///D:/Strea
+mify/Streamify-frontend
+/node_modules/rollup/di
+st/es/shared/node-entry
+.js:20709:32
+    at Object.logger 
+[as onLog] (file:///D:/
+Streamify/Streamify-fro
+ntend/node_modules/roll
+up/dist/es/shared/node-
+entry.js:22588:9)
+    at ModuleLoader.han
+dleInvalidResolvedId (f
+ile:///D:/Streamify/Str
+eamify-frontend/node_mo
+dules/rollup/dist/es/sh
+ared/node-entry.js:2133
+5:26)
+    at file:///D:/Strea
+mify/Streamify-frontend
+/node_modules/rollup/di
+st/es/shared/node-entry
+.js:21293:26[39m

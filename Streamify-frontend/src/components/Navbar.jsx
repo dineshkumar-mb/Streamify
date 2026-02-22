@@ -2,12 +2,18 @@ import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { BellIcon, HomeIcon, LogOutIcon, Menu, ShipWheelIcon } from "lucide-react";
 import ThemeSelector from "./ThemeSelector";
+import LanguageSelector from "./LanguageSelector";
+import StickerStoreModal from "./StickerStoreModal";
 import useLogout from "../hooks/useLogout";
+import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 const Navbar = ({ onOpenSidebar }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
   const isSingleChatPage = location.pathname?.startsWith("/chat/");
+  const { t } = useTranslation();
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   // const queryClient = useQueryClient();
   // const { mutate: logoutMutation } = useMutation({
@@ -58,7 +64,7 @@ const Navbar = ({ onOpenSidebar }) => {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="tooltip tooltip-bottom" data-tip="Home">
+            <div className="tooltip tooltip-bottom" data-tip={t("navbar.home")}>
               <Link to={"/"} className="hidden sm:inline-block">
                 <button className="btn btn-ghost btn-circle">
                   <HomeIcon className="h-6 w-6 text-base-content opacity-70" />
@@ -66,7 +72,7 @@ const Navbar = ({ onOpenSidebar }) => {
               </Link>
             </div>
 
-            <div className="tooltip tooltip-bottom" data-tip="Notifications">
+            <div className="tooltip tooltip-bottom" data-tip={t("navbar.notifications")}>
               <Link to={"/notifications"} className="hidden sm:inline-block">
                 <button className="btn btn-ghost btn-circle">
                   <BellIcon className="h-6 w-6 text-base-content opacity-70" />
@@ -74,7 +80,16 @@ const Navbar = ({ onOpenSidebar }) => {
               </Link>
             </div>
 
-            {/* TODO */}
+            {/* Store */}
+            <div className="tooltip tooltip-bottom" data-tip="Sticker Store">
+              <button className="btn btn-ghost btn-circle text-primary" onClick={() => setIsStoreOpen(true)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </button>
+            </div>
+
+            <LanguageSelector />
             <ThemeSelector />
 
             <div className="avatar">
@@ -84,7 +99,7 @@ const Navbar = ({ onOpenSidebar }) => {
             </div>
 
             {/* Logout button */}
-            <div className="tooltip tooltip-bottom" data-tip="Logout">
+            <div className="tooltip tooltip-bottom" data-tip={t("navbar.logout")}>
               <button className="btn btn-ghost btn-circle" onClick={logoutMutation}>
                 <LogOutIcon className="h-6 w-6 text-base-content opacity-70" />
               </button>
@@ -92,6 +107,8 @@ const Navbar = ({ onOpenSidebar }) => {
           </div>
         </div>
       </div>
+
+      {isStoreOpen && <StickerStoreModal onClose={() => setIsStoreOpen(false)} />}
     </nav>
   );
 };

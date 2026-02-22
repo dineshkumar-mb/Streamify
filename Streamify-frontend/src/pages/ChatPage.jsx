@@ -13,6 +13,7 @@ import {
   Thread,
   Window,
 } from "stream-chat-react";
+import { EmojiPicker } from "stream-chat-react/emojis";
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 
@@ -21,7 +22,9 @@ import CallButton from "../components/CallButton";
 import CustomMessage from "../components/CustomMessage";
 import WhatsAppHeader from "../components/WhatsAppHeader";
 import VoiceRecorder from "../components/VoiceRecorder";
+import StickerPicker from "../components/StickerPicker";
 import { encryptMessage } from "../lib/encryption";
+import { GhostIcon } from "lucide-react";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
@@ -32,6 +35,7 @@ const ChatPage = () => {
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showStickers, setShowStickers] = useState(false);
 
   const { authUser } = useAuthUser();
 
@@ -198,6 +202,35 @@ const ChatPage = () => {
     }
   };
 
+  const handleSendSticker = async (stickerUrl) => {
+    if (!channel) return;
+
+    try {
+      const encrypted = encryptMessage("Sent a sticker");
+      const res = await channel.sendMessage({
+        text: encrypted,
+        attachments: [
+          {
+            type: "sticker",
+            image_url: stickerUrl,
+            fallback: "Sticker attachment",
+          },
+        ],
+      });
+
+      await persistToMongo({
+        content: stickerUrl,
+        messageType: "sticker",
+        streamMsgId: res.message?.id,
+      });
+
+      setShowStickers(false);
+    } catch (error) {
+      console.error("Error sending sticker:", error);
+      toast.error("Failed to send sticker.");
+    }
+  };
+
   if (loading || !chatClient || !channel) return <ChatLoader />;
 
   return (
@@ -208,6 +241,7 @@ const ChatPage = () => {
           Message={CustomMessage}
           TypingIndicator={() => null}
           enableMessagesPositionRendering={true}
+          EmojiPicker={EmojiPicker}
         >
           <div className="w-full relative flex-1 flex flex-col h-full bg-transparent">
             <Window>
@@ -225,6 +259,20 @@ const ChatPage = () => {
               <MessageList Message={CustomMessage} />
 
               <div className="flex items-end gap-2 px-2 sm:px-3 py-2 bg-transparent sticky bottom-0">
+                <div className="absolute bottom-16 left-4 z-50">
+                  {showStickers && <StickerPicker onSelectSticker={handleSendSticker} />}
+                </div>
+
+                <div className="mb-0.5">
+                  <button
+                    onClick={() => setShowStickers(!showStickers)}
+                    className={`btn btn-circle btn-sm ${showStickers ? "bg-primary text-white" : "btn-ghost"}`}
+                    title="Stickers"
+                  >
+                    <GhostIcon className="size-5" />
+                  </button>
+                </div>
+
                 <div className="flex-1 flex items-center bg-base-100 rounded-[24px] px-2 py-1 shadow-sm border border-base-300/50">
                   <MessageInput
                     focus

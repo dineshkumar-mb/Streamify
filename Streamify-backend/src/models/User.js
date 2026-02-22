@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    downloadedStickers: [
+      {
+        type: String, // Store IDs of sticker packages
+      }
+    ],
     friends: [
       {
         type: mongoose.Schema.Types.ObjectId,

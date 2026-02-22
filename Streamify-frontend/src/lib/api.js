@@ -98,3 +98,18 @@ export async function getMongoConversations() {
   const response = await axiosInstance.get("/messages/conversations");
   return response.data;
 }
+
+export async function getStickers() {
+  const response = await axiosInstance.get("/users/stickers");
+  return response.data;
+}
+
+export async function downloadStickerPack(packId) {
+  const response = await axiosInstance.post(`/users/stickers/${packId}/download`);
+  return response.data;
+}
+
+export async function removeStickerPack(packId) {
+  const response = await axiosInstance.delete(`/users/stickers/${packId}/remove`);
+  return response.data;
+}

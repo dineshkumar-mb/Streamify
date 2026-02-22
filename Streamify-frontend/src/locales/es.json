@@ -1,0 +1,28 @@
+{
+    "navbar": {
+        "home": "Inicio",
+        "notifications": "Notificaciones",
+        "logout": "Cerrar sesión",
+        "friends": "Amigos",
+        "chats": "Chats",
+        "profile": "Perfil"
+    },
+    "common": {
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "save": "Guardar",
+        "cancel": "Cancelar"
+    },
+    "home": {
+        "yourFriends": "Tus amigos",
+        "friendRequests": "Solicitudes de amistad",
+        "meetNewLearners": "Conoce a nuevos estudiantes",
+        "discoverPartners": "Descubre compañeros perfectos de intercambio de idiomas basados en tu perfil",
+        "noRecommendations": "No hay recomendaciones disponibles",
+        "checkBackLater": "¡Vuelve más tarde para nuevos compañeros de idioma!",
+        "native": "Nativo:",
+        "learning": "Aprendiendo:",
+        "requestSent": "Solicitud enviada",
+        "sendFriendRequest": "Enviar solicitud de amistad"
+    }
+}

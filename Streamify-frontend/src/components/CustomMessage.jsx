@@ -84,6 +84,14 @@ const CustomMessage = () => {
                             className="h-8 max-w-full"
                         />
                     </div>
+                ) : message.attachments?.some(a => a.type === 'sticker') ? (
+                    <div className="flex flex-col items-center">
+                        <img
+                            src={message.attachments.find(a => a.type === 'sticker').image_url}
+                            alt="Sticker"
+                            className="w-32 h-32 object-contain"
+                        />
+                    </div>
                 ) : (
                     <p className="whitespace-pre-wrap break-words">{decryptedText}</p>
                 )}
