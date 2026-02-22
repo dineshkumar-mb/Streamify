@@ -281,9 +281,21 @@ export const resetPassword = async (req, res) => {
 export const googleAuthCallback = (req, res) => {
   try {
     const user = req.user;
+
+    let clientUrl =
+      process.env.NODE_ENV === "development"
+        ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
+        : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
+
+    if (req.query.state) {
+      try {
+        const decoded = Buffer.from(req.query.state, "base64").toString("utf-8");
+        if (decoded.startsWith("http")) clientUrl = decoded;
+      } catch (e) { }
+    }
+
     if (!user) {
-      const fallback = process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
-      return res.redirect(`${fallback}/login?error=GoogleAuthFailed`);
+      return res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
@@ -293,19 +305,21 @@ export const googleAuthCallback = (req, res) => {
     // ✅ Set token as httpOnly cookie only — do NOT expose in URL
     setTokenCookie(res, token);
 
-    const clientUrl =
-      process.env.NODE_ENV === "development"
-        ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
-        : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
-
     // Redirect WITH token in URL parameter — frontend should capture this and remove it
     res.redirect(`${clientUrl.replace(/\/$/, "")}?token=${token}`);
   } catch (error) {
     console.error("Error in googleCallback:", error);
-    const clientUrl =
+    let clientUrl =
       process.env.NODE_ENV === "development"
         ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
         : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
+
+    if (req.query.state) {
+      try {
+        const decoded = Buffer.from(req.query.state, "base64").toString("utf-8");
+        if (decoded.startsWith("http")) clientUrl = decoded;
+      } catch (e) { }
+    }
 
     res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
   }

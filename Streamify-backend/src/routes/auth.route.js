@@ -17,9 +17,12 @@ router.get("/me", protectRoute, getAuthUser);
 router.get("/google", (req, res, next) => {
     // Dynamically determine the callback URL based on the request protocol and host
     const callbackURL = `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+    const state = req.query.origin ? Buffer.from(req.query.origin).toString("base64") : undefined;
+
     passport.authenticate("google", {
         scope: ["profile", "email"],
-        callbackURL
+        callbackURL,
+        state
     })(req, res, next);
 });
 
@@ -31,9 +34,16 @@ router.get("/google/callback", (req, res, next) => {
         callbackURL
     }, (err, user, info) => {
         if (err || !user) {
-            const clientUrl = process.env.NODE_ENV === "development"
+            let clientUrl = process.env.NODE_ENV === "development"
                 ? (process.env.CLIENT_URL_DEV || "http://localhost:5173")
                 : (process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app");
+
+            if (req.query.state) {
+                try {
+                    const decoded = Buffer.from(req.query.state, "base64").toString("utf-8");
+                    if (decoded.startsWith("http")) clientUrl = decoded;
+                } catch (e) { }
+            }
             return res.redirect(`${clientUrl.replace(/\/$/, "")}/login?error=GoogleAuthFailed`);
         }
         req.user = user;

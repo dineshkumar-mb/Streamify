@@ -325,7 +325,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 className="btn btn-outline w-full google-btn"
-                onClick={() => (window.location.href = `${BASE_URL}/auth/google`)}
+                onClick={() => (window.location.href = `${BASE_URL}/auth/google?origin=${encodeURIComponent(window.location.origin)}`)}
               >
                 <img
                   src="https://img.icons8.com/color/48/000000/google-logo.png"
