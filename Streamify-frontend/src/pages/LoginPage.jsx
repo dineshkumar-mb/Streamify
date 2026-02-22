@@ -318,10 +318,11 @@ const LoginPage = () => {
                 )}
               </button>
 
-              {/* Divider */}
+              {/* Divider 
               <div className="divider text-xs opacity-40 my-1">OR</div>
+              */}
 
-              {/* Google */}
+              {/* Google 
               <button
                 type="button"
                 className="btn btn-outline w-full google-btn"
@@ -334,6 +335,7 @@ const LoginPage = () => {
                 />
                 Continue with Google
               </button>
+              */}
             </form>
 
             {/* Sign up */}

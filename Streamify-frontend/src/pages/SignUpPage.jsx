@@ -142,10 +142,12 @@ const SignUpPage = () => {
                     </Link>
                   </p>
                 </div>
+                {/* 
                 <button type="button" className="btn btn-outline w-full mt-4" onClick={() => window.location.href = `${BASE_URL}/auth/google?origin=${encodeURIComponent(window.location.origin)}`}>
                   <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" className="w-5 h-5 mr-2" />
                   Continue with Google
                 </button>
+                */}
               </div>
             </form>
           </div>
