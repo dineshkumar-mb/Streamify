@@ -16,6 +16,9 @@ export const logout = async () => {
 
 export const getAuthUser = async () => {
   try {
+    const token = localStorage.getItem("token");
+    if (!token) return null; // Skip network request if clearly unauthenticated
+
     const res = await axiosInstance.get("/auth/me");
     return res.data;
   } catch (error) {
