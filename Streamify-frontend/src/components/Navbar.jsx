@@ -7,7 +7,7 @@ import useLogout from "../hooks/useLogout";
 const Navbar = ({ onOpenSidebar }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
-  const isChatPage = location.pathname?.startsWith("/chat");
+  const isSingleChatPage = location.pathname?.startsWith("/chat/");
 
   // const queryClient = useQueryClient();
   // const { mutate: logoutMutation } = useMutation({
@@ -23,7 +23,7 @@ const Navbar = ({ onOpenSidebar }) => {
         <div className="flex items-center justify-between w-full">
           {/* Mobile Menu Button - Left Side */}
           <div className="flex items-center gap-4">
-            {!isChatPage && (
+            {!isSingleChatPage && (
               <button
                 className="btn btn-ghost btn-circle lg:hidden"
                 onClick={onOpenSidebar}
@@ -32,8 +32,8 @@ const Navbar = ({ onOpenSidebar }) => {
               </button>
             )}
 
-            {/* LOGO - ONLY IN THE CHAT PAGE AND MOBILE HOME */}
-            {isChatPage && (
+            {/* LOGO - ONLY IN THE SINGLE CHAT PAGE AND MOBILE HOME */}
+            {isSingleChatPage && (
               <div className="pl-0 sm:pl-5">
                 <Link to="/" className="flex items-center gap-2.5">
                   <ShipWheelIcon className="size-8 sm:size-9 text-primary" />
@@ -44,8 +44,8 @@ const Navbar = ({ onOpenSidebar }) => {
               </div>
             )}
 
-            {/* Show Logo on mobile if not on chat page (since Sidebar is hidden) */}
-            {!isChatPage && (
+            {/* Show Logo on mobile if not on single chat page (since Sidebar is hidden on mobile) */}
+            {!isSingleChatPage && (
               <div className="lg:hidden">
                 <Link to="/" className="flex items-center gap-2">
                   <ShipWheelIcon className="size-6 text-primary" />
