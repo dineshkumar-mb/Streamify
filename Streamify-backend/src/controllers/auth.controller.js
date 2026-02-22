@@ -71,9 +71,9 @@ export async function signup(req, res) {
 
     setTokenCookie(res, token);
 
-    // Never expose password or token in response body
+    // Never expose password in response body
     const { password: _, ...userWithoutPassword } = newUser.toObject();
-    res.status(201).json({ success: true, user: userWithoutPassword });
+    res.status(201).json({ success: true, user: userWithoutPassword, token });
   } catch (error) {
     console.error("Error in signup controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -116,7 +116,7 @@ export async function login(req, res) {
     setTokenCookie(res, token);
 
     const { password: _, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ success: true, user: userWithoutPassword });
+    res.status(200).json({ success: true, user: userWithoutPassword, token });
   } catch (error) {
     console.error("Error in login controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -298,8 +298,8 @@ export const googleAuthCallback = (req, res) => {
         ? process.env.CLIENT_URL_DEV || "http://localhost:5173"
         : process.env.CLIENT_URL_PROD || "https://streamify-inky-one.vercel.app";
 
-    // Redirect without token in URL — frontend reads auth state from cookie
-    res.redirect(`${clientUrl.replace(/\/$/, "")}`);
+    // Redirect WITH token in URL parameter — frontend should capture this and remove it
+    res.redirect(`${clientUrl.replace(/\/$/, "")}?token=${token}`);
   } catch (error) {
     console.error("Error in googleCallback:", error);
     const clientUrl =
